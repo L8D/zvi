@@ -1,0 +1,67 @@
+% comments are like this
+
+% outside of operator precedence, the only special
+% syntax is ':-' and ':='. ':=' is used for a type
+% annotation. Types are just additional predicate
+% calls, but they are restricted to not using IO
+% values or ambigious stuff a compiler couldn't
+% figure out.
+
+my_predicate := true. % my_predicate is valid under any pretense
+my_predicate :- true. % my_predicate is true under any pretense
+
+my_predicate. % same as above.
+
+% when a signature is always true, you don't need
+% to write it, it will be infered. This is common
+% shorthand for declaring types. For example:
+
+% data Nat = Zero | Succ Nat
+nat(zero).
+nat(succ(N)) :- nat(N).
+
+% data Ordering = Equal | Greater | Lesser
+ordering(equal).
+ordering(greater).
+ordering(lesser).
+
+% now we can use ordering in a type declaration:
+compare(X, Y, R) := A(X), A(Y), ordering(R). % a -> a -> Ordering
+
+% because all types are of rank N, like the 'A'
+% type predicate above, any number of implementations
+% for any number of types of the predicate may be
+% written.
+
+% where A = nat (but really it's more that nat
+% satisfies the type, any other type that uses
+% zero and/or succ(_) as constructors are also
+% valid implementations)
+compare(zero, zero, equal).
+compare(zero, succ(_), lesser).
+compare(succ(_), zero, greater).
+compare(succ(X), succ(Y), R) :- compare(X, Y, R).
+
+% Zvi doesn't have *real* type classes, it just
+% uses it's fancy rank types to declare type
+% classes as synonyms for types that have
+% implementations for abstract pedicates.
+
+ord(A) := type(A). % A must be a valid type predicate.
+ord(A) :- A(X), A(Y), compare(X, Y, _). % these X and Y values are
+                                        % just phantom types used to
+                                        % place restrictions on what
+                                        % types can satisfy ord(A).
+                                        % They don't exist anywhere else.
+
+less(X, Y) := ord(A), A(X), A(Y).
+less(X, Y) :- compare(X, Y, lesser).
+
+map(P, X, Y) := pred(A, B, P), F(A, FofA), F(B, FofB), FofA(X), FofB(Y).
+
+functor(F) := pred(type, type, F). % F must be a valid type constructor
+functor(F) :- F(A, FofA), F(B, FofB), map(_, FofA, FofB).
+
+pure(X, R) := A(X), F(A, FofA), FofA(R).
+
+ap(FP, FX) := F(A, FofA), FofA(FX), F(B, FofB) % zzzZZzzZZz...
