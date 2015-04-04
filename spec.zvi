@@ -62,6 +62,20 @@ map(P, X, Y) := pred(A, B, P), F(A, FofA), F(B, FofB), FofA(X), FofB(Y).
 functor(F) := pred(type, type, F). % F must be a valid type constructor
 functor(F) :- F(A, FofA), F(B, FofB), map(_, FofA, FofB).
 
-pure(X, R) := A(X), F(A, FofA), FofA(R).
+maybe(A, just(X)) :- A(X).
+maybe(_, nothing).
 
-ap(FP, FX) := F(A, FofA), FofA(FX), F(B, FofB) % zzzZZzzZZz...
+map(P, just(X), just(Y)) :- P(X, Y).
+map(_, nothing, nothing).
+
+% statements beginning with := are compile-time
+% validations they are more for documentation
+% than safety, and they improve error messages.
+:= functor(maybe).
+
+compare(just(X), just(Y), R) :- compare(X, Y, R).
+compare(just(_), nothing, greater).
+compare(nothing, just(_), lesser).
+compare(nothing, nothing, equal).
+
+:= ord(A), ord(maybe(A)).
